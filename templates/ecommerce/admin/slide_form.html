@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load ecommerce_filters %}
+
+{% block title %}{{ action }} Slide - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">{{ action }} Slide</h1>
+        <p class="text-gray-600">Fill in the details below to {{ action|lower }} a carousel slide</p>
+    </div>
+
+    <!-- Slide Form -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Title -->
+                <div class="md:col-span-2">
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                        Title *
+                    </label>
+                    <input type="text" id="title" name="title" required
+                           value="{% if slide %}{{ slide.title }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="Enter slide title">
+                </div>
+
+                <!-- Subtitle -->
+                <div class="md:col-span-2">
+                    <label for="subtitle" class="block text-sm font-medium text-gray-700 mb-2">
+                        Subtitle
+                    </label>
+                    <input type="text" id="subtitle" name="subtitle"
+                           value="{% if slide %}{{ slide.subtitle }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="Enter slide subtitle">
+                </div>
+
+                <!-- Image Upload -->
+                <div class="md:col-span-2">
+                    <label for="image_file" class="block text-sm font-medium text-gray-700 mb-2">
+                        Upload Image
+                    </label>
+                    <input type="file" id="image_file" name="image_file" accept="image/*"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    <p class="text-xs text-gray-500 mt-1">Select an image file (JPG, PNG, GIF)</p>
+                    
+                    <!-- Show existing uploaded image -->
+                    {% if slide and slide.image_file %}
+                    <div class="mt-3">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Current Uploaded Image:</p>
+                        <div class="relative inline-block">
+                            <img src="/{{ slide.image_file }}" alt="Slide image" class="w-32 h-24 object-cover rounded border">
+                            <span class="absolute top-0 right-0 bg-gray-800 text-white text-xs px-1 rounded">Uploaded</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Image URL (Alternative) -->
+                <div class="md:col-span-2">
+                    <label for="image_url" class="block text-sm font-medium text-gray-700 mb-2">
+                        Image URL (Alternative)
+                    </label>
+                    <input type="url" id="image_url" name="image_url"
+                           value="{% if slide %}{{ slide.image_url }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="https://example.com/image.jpg">
+                    <p class="text-xs text-gray-500 mt-1">Enter the URL of the image (optional if uploading a file)</p>
+                    
+                    <!-- Show existing URL image -->
+                    {% if slide and slide.image_url %}
+                    <div class="mt-3">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Current URL Image:</p>
+                        <div class="relative inline-block">
+                            <img src="{{ slide.image_url }}" alt="Slide image" class="w-32 h-24 object-cover rounded border">
+                            <span class="absolute top-0 right-0 bg-blue-800 text-white text-xs px-1 rounded">URL</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Order -->
+                <div>
+                    <label for="order" class="block text-sm font-medium text-gray-700 mb-2">
+                        Display Order
+                    </label>
+                    <input type="number" id="order" name="order" min="0"
+                           value="{% if slide %}{{ slide.order }}{% else %}0{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="0">
+                    <p class="text-xs text-gray-500 mt-1">Lower numbers appear first</p>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="is_active" class="flex items-center">
+                        <input type="checkbox" id="is_active" name="is_active"
+                               {% if slide and slide.is_active %}checked{% endif %}
+                               class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <span class="ml-2 text-sm font-medium text-gray-700">Active</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1">Inactive slides won't be shown in the carousel</p>
+                </div>
+            </div>
+
+            <!-- Image Preview -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Image Preview</label>
+                <div class="border border-gray-300 rounded-md p-4 bg-gray-50">
+                    <div id="imagePreview" class="h-64 bg-gray-200 rounded-md flex items-center justify-center">
+                        {% if slide %}
+                            {% if slide.image_file %}
+                            <img src="/{{ slide.image_file }}" alt="Preview" class="max-w-full max-h-full object-contain">
+                            {% elif slide.image_url %}
+                            <img src="{{ slide.image_url }}" alt="Preview" class="max-w-full max-h-full object-contain">
+                            {% else %}
+                            <div class="text-gray-500">
+                                <i class="fas fa-image text-4xl mb-2"></i>
+                                <p class="text-sm">No image selected</p>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="text-gray-500">
+                            <i class="fas fa-image text-4xl mb-2"></i>
+                            <p class="text-sm">No image selected</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-6 border-t">
+                <a href="{% url 'slide_list_admin' %}" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-300">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-600 transition duration-300">
+                    {% if action == 'Create' %}
+                        <i class="fas fa-plus mr-2"></i>Create Slide
+                    {% else %}
+                        <i class="fas fa-save mr-2"></i>Update Slide
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Back to Slides -->
+    <div class="mt-8 text-center">
+        <a href="{% url 'slide_list_admin' %}" class="text-primary hover:text-blue-600 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Slides
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image preview functionality
+document.getElementById('image_url').addEventListener('input', function() {
+    const imageUrl = this.value;
+    const preview = document.getElementById('imagePreview');
+    
+    if (imageUrl) {
+        preview.innerHTML = `<img src="${imageUrl}" alt="Preview" class="max-w-full max-h-full object-contain" onerror="this.parentElement.innerHTML='<div class=\\'text-red-500\\'><i class=\\'fas fa-exclamation-triangle text-4xl mb-2\\'></i><p class=\\'text-sm\\'>Invalid image URL</p></div>'">`;
+    } else {
+        preview.innerHTML = '<div class="text-gray-500"><i class="fas fa-image text-4xl mb-2"></i><p class="text-sm">No image selected</p></div>';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load ecommerce_filters %}
+
+{% block title %}Shopping Cart - E-Store{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">Shopping Cart</h1>
+
+    {% if cart_items %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Cart Items -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="p-6 border-b">
+                    <h2 class="text-xl font-semibold">Cart Items ({{ cart_items|length }})</h2>
+                </div>
+                <div class="divide-y">
+                    {% for item in cart_items %}
+                    <div class="p-6 cart-item" data-item-id="{{ item.id }}">
+                        <div class="flex items-center space-x-4">
+                            <!-- Product Image -->
+                            <div class="flex-shrink-0">
+                                {% if item.product.images_display %}
+                                <img src="{% if item.product.image_files and item.product.image_files.0 %}/{{ item.product.image_files.0 }}{% else %}{{ item.product.image_urls.0 }}{% endif %}" alt="{{ item.product.name }}" class="w-20 h-20 object-cover rounded">
+                                {% else %}
+                                <div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                                    <i class="fas fa-image text-gray-400"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-lg">{{ item.product.name }}</h3>
+                                <p class="text-gray-600 text-sm">{{ item.product.category.name }}</p>
+                                <p class="text-primary font-bold">${{ item.product.price }}</p>
+                            </div>
+                            
+                            <!-- Quantity Controls -->
+                            <div class="flex items-center space-x-2">
+                                <button class="quantity-btn bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300" 
+                                        data-action="decrease">
+                                    <i class="fas fa-minus text-xs"></i>
+                                </button>
+                                <input type="number" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
+                                       class="quantity-input w-16 text-center border border-gray-300 rounded-md py-1">
+                                <button class="quantity-btn bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300" 
+                                        data-action="increase">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Item Total -->
+                            <div class="text-right">
+                                <p class="font-bold text-lg">${{ item.product.price|floatformat:2 }}</p>
+                                <p class="text-sm text-gray-600">Total: ${{ item.product.price|multiply:item.quantity|floatformat:2 }}</p>
+                            </div>
+                            
+                            <!-- Remove Button -->
+                            <button class="remove-item-btn text-red-500 hover:text-red-700 transition duration-300" 
+                                    data-item-id="{{ item.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Subtotal:</span>
+                        <span class="font-semibold">${{ total|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Shipping:</span>
+                        <span class="font-semibold">Free</span>
+                    </div>
+                    <div class="border-t pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-lg font-bold">Total:</span>
+                            <span class="text-lg font-bold text-primary">${{ total|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'checkout' %}" class="w-full bg-primary text-white py-3 px-6 rounded-md hover:bg-blue-600 transition duration-300 font-semibold text-center block">
+                        Proceed to Checkout
+                    </a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="w-full bg-primary text-white py-3 px-6 rounded-md hover:bg-blue-600 transition duration-300 font-semibold text-center block">
+                        Login to Checkout
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'product_list' %}" class="w-full bg-gray-200 text-gray-700 py-3 px-6 rounded-md hover:bg-gray-300 transition duration-300 font-semibold text-center block">
+                        Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="text-center py-16">
+        <i class="fas fa-shopping-cart text-gray-400 text-8xl mb-6"></i>
+        <h2 class="text-2xl font-semibold text-gray-600 mb-4">Your cart is empty</h2>
+        <p class="text-gray-500 mb-8">Looks like you haven't added any items to your cart yet.</p>
+        <a href="{% url 'product_list' %}" class="bg-primary text-white px-8 py-3 rounded-md text-lg font-semibold hover:bg-blue-600 transition duration-300">
+            Start Shopping
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Quantity controls
+    document.querySelectorAll('.quantity-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.dataset.action;
+            const input = this.parentElement.querySelector('.quantity-input');
+            let value = parseInt(input.value);
+            
+            if (action === 'increase') {
+                value = Math.min(value + 1, parseInt(input.max));
+            } else if (action === 'decrease') {
+                value = Math.max(value - 1, 1);
+            }
+            
+            input.value = value;
+            updateCartItem(input);
+        });
+    });
+    
+    // Quantity input change
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+            updateCartItem(this);
+        });
+    });
+    
+    // Remove item
+    document.querySelectorAll('.remove-item-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            removeCartItem(itemId);
+        });
+    });
+    
+    function updateCartItem(input) {
+        const itemId = input.closest('.cart-item').dataset.itemId;
+        const quantity = parseInt(input.value);
+        
+        fetch('/update-cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to update totals
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    
+    function removeCartItem(itemId) {
+        fetch('/remove-from-cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify({
+                item_id: itemId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove item from DOM
+                const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+                itemElement.remove();
+                
+                // Update cart count
+                updateCartCount();
+                
+                // Check if cart is empty
+                const remainingItems = document.querySelectorAll('.cart-item');
+                if (remainingItems.length === 0) {
+                    location.reload();
+                } else {
+                    // Reload to update totals
+                    location.reload();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+</script>
+{% endblock %}

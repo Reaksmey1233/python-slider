@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load ecommerce_filters %}
+
+{% block title %}{{ action }} Product - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">{{ action }} Product</h1>
+        <p class="text-gray-600">Fill in the details below to {{ action|lower }} a product</p>
+    </div>
+
+    <!-- Product Form -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Product Name -->
+                <div class="md:col-span-2">
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Product Name *
+                    </label>
+                    <input type="text" id="name" name="name" required
+                           value="{% if product %}{{ product.name }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="Enter product name">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                        Category *
+                    </label>
+                    <select id="category" name="category" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" 
+                                {% if product and product.category.id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price -->
+                <div>
+                    <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                        Price *
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">$</span>
+                        <input type="number" id="price" name="price" step="0.01" min="0" required
+                               value="{% if product %}{{ product.price }}{% endif %}"
+                               class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                               placeholder="0.00">
+                    </div>
+                </div>
+
+                <!-- Stock -->
+                <div>
+                    <label for="stock" class="block text-sm font-medium text-gray-700 mb-2">
+                        Stock Quantity *
+                    </label>
+                    <input type="number" id="stock" name="stock" min="0" required
+                           value="{% if product %}{{ product.stock }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="0">
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="is_active" class="flex items-center">
+                        <input type="checkbox" id="is_active" name="is_active"
+                               {% if product and product.is_active %}checked{% endif %}
+                               class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <span class="ml-2 text-sm font-medium text-gray-700">Active</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1">Inactive products won't be visible to customers</p>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description *
+                </label>
+                <textarea id="description" name="description" rows="4" required
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                          placeholder="Enter product description">{% if product %}{{ product.description }}{% endif %}</textarea>
+            </div>
+
+            <!-- Image Uploads -->
+            <div>
+                <label for="image_files" class="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Images
+                </label>
+                <input type="file" id="image_files" name="image_files" multiple accept="image/*"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                <p class="text-xs text-gray-500 mt-1">Select multiple image files (JPG, PNG, GIF)</p>
+                
+                <!-- Show existing uploaded images -->
+                {% if product and product.image_files %}
+                <div class="mt-3">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Current Uploaded Images:</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {% for image_path in product.image_files %}
+                        <div class="relative">
+                            <img src="/{{ image_path }}" alt="Product image" class="w-full h-20 object-cover rounded border">
+                            <span class="absolute top-0 right-0 bg-gray-800 text-white text-xs px-1 rounded">Uploaded</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Image URLs -->
+            <div>
+                <label for="image_urls" class="block text-sm font-medium text-gray-700 mb-2">
+                    Image URLs (Alternative)
+                </label>
+                <textarea id="image_urls" name="image_urls" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                          placeholder="Enter image URLs separated by commas (e.g., https://example.com/image1.jpg, https://example.com/image2.jpg)">{% if product %}{{ product.image_urls|join:", " }}{% endif %}</textarea>
+                <p class="text-xs text-gray-500 mt-1">Separate multiple image URLs with commas (optional if uploading files)</p>
+                
+                <!-- Show existing URL images -->
+                {% if product and product.image_urls %}
+                <div class="mt-3">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Current URL Images:</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {% for image_url in product.image_urls %}
+                        <div class="relative">
+                            <img src="{{ image_url }}" alt="Product image" class="w-full h-20 object-cover rounded border">
+                            <span class="absolute top-0 right-0 bg-blue-800 text-white text-xs px-1 rounded">URL</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-6 border-t">
+                <a href="{% url 'product_list_admin' %}" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-300">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-600 transition duration-300">
+                    {% if action == 'Create' %}
+                        <i class="fas fa-plus mr-2"></i>Create Product
+                    {% else %}
+                        <i class="fas fa-save mr-2"></i>Update Product
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Back to Products -->
+    <div class="mt-8 text-center">
+        <a href="{% url 'product_list_admin' %}" class="text-primary hover:text-blue-600 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Products
+        </a>
+    </div>
+</div>
+{% endblock %}

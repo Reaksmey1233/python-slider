@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load ecommerce_filters %}
+
+{% block title %}Order Confirmation - E-Store{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="text-center mb-8">
+        <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-check text-green-600 text-2xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Order Confirmed!</h1>
+        <p class="text-gray-600">Thank you for your purchase. Your order has been successfully placed.</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Order #{{ order.order_number }}</h2>
+                <p class="text-gray-600">Placed on {{ order.created_at|date:"F d, Y at g:i A" }}</p>
+            </div>
+            <div class="text-right">
+                <span class="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    {{ order.status|title }}
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-2">Shipping Address</h3>
+                <p class="text-gray-600">{{ order.shipping_address }}</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-2">Order Summary</h3>
+                <p class="text-gray-600">Total Items: {{ order.items|length }}</p>
+                <p class="text-gray-600">Total Amount: <span class="font-semibold text-primary">${{ order.total_amount|floatformat:2 }}</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Items</h3>
+        <div class="space-y-4">
+            {% for item in order.items %}
+            <div class="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                <div class="flex-shrink-0">
+                    {% if item.product.images_display %}
+                    <img src="{% if item.product.image_files and item.product.image_files.0 %}/{{ item.product.image_files.0 }}{% else %}{{ item.product.image_urls.0 }}{% endif %}" alt="{{ item.product.name }}" class="w-16 h-16 object-cover rounded">
+                    {% else %}
+                    <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                        <i class="fas fa-image text-gray-400"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <h4 class="font-semibold text-gray-800">{{ item.product.name }}</h4>
+                    <p class="text-gray-600 text-sm">{{ item.product.category.name }}</p>
+                    <p class="text-gray-600 text-sm">Quantity: {{ item.quantity }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold text-primary">${{ item.product.price|floatformat:2 }}</p>
+                    <p class="text-sm text-gray-600">Total: ${{ item.product.price|multiply:item.quantity|floatformat:2 }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Order Timeline -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Timeline</h3>
+        <div class="space-y-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-white text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-gray-800">Order Placed</p>
+                    <p class="text-sm text-gray-600">{{ order.created_at|date:"F d, Y at g:i A" }}</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <i class="fas fa-clock text-gray-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-gray-600">Processing</p>
+                    <p class="text-sm text-gray-500">Your order is being processed</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <i class="fas fa-truck text-gray-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-gray-600">Shipped</p>
+                    <p class="text-sm text-gray-500">Your order will be shipped soon</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <i class="fas fa-home text-gray-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-medium text-gray-600">Delivered</p>
+                    <p class="text-sm text-gray-500">Your order will be delivered</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center space-y-4">
+        <a href="{% url 'my_orders' %}" class="inline-block bg-primary text-white px-8 py-3 rounded-md hover:bg-blue-600 transition duration-300 font-semibold">
+            View All Orders
+        </a>
+        <div>
+            <a href="{% url 'product_list' %}" class="text-primary hover:text-blue-600 font-medium">
+                Continue Shopping
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
